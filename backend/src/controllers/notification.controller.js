@@ -14,10 +14,10 @@ const DEFAULT_PREFERENCES = {
     PROJECT_CHAT: true,
 }
 
-// ─── GET /api/notifications ───────────────────────────────────────────────────
+// --- GET /api/notifications ---------------------------------------------------
 // Get notifications for logged-in user
-// ?unread=true   → only unread
-// ?limit=20      → how many (default 30, max 100)
+// ?unread=true   -> only unread
+// ?limit=20      -> how many (default 30, max 100)
 async function getNotifications(req, res) {
     try {
         const query = { user_id: req.user.id }
@@ -41,8 +41,8 @@ async function getNotifications(req, res) {
 }
 
 
-// ─── GET /api/notifications/unread-count ─────────────────────────────────────
-// Just the number — called on page load to populate bell badge
+// --- GET /api/notifications/unread-count -------------------------------------
+// Just the number - called on page load to populate bell badge
 async function getUnreadCount(req, res) {
     try {
         const count = await notificationModel.countDocuments({
@@ -57,7 +57,7 @@ async function getUnreadCount(req, res) {
 }
 
 
-// ─── PUT /api/notifications/:id/read ─────────────────────────────────────────
+// --- PUT /api/notifications/:id/read -----------------------------------------
 // Mark one notification as read
 async function markRead(req, res) {
     try {
@@ -75,7 +75,7 @@ async function markRead(req, res) {
 }
 
 
-// ─── PUT /api/notifications/read-all ─────────────────────────────────────────
+// --- PUT /api/notifications/read-all -----------------------------------------
 // Mark all of the user's notifications as read
 async function markAllRead(req, res) {
     try {
@@ -91,7 +91,7 @@ async function markAllRead(req, res) {
 }
 
 
-// ─── DELETE /api/notifications/:id ───────────────────────────────────────────
+// --- DELETE /api/notifications/:id -------------------------------------------
 // Delete a single notification (own only)
 async function deleteNotification(req, res) {
     try {
@@ -108,7 +108,7 @@ async function deleteNotification(req, res) {
 }
 
 
-// ─── DELETE /api/notifications ───────────────────────────────────────────────
+// --- DELETE /api/notifications -----------------------------------------------
 // Clear all notifications for the user
 async function clearAll(req, res) {
     try {

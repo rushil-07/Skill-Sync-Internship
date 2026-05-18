@@ -4,7 +4,7 @@ const { authUser }       = require('../middlewares/auth.middleware')
 
 const router = express.Router()
 
-// GET /api/member/dashboard — full member dashboard in one request
+// GET /api/member/dashboard - full member dashboard in one request
 router.get('/dashboard', authUser, memberController.getMemberDashboard)
 router.post('/projects/:projectId/interest', authUser, memberController.expressInterest)
 

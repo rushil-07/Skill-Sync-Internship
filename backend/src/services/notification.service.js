@@ -3,15 +3,15 @@ const userModel = require('../models/user.model')
 const { getIO } = require('../socket');
 
 
-// ─── create ───────────────────────────────────────────────────────────────────
-// Central function — saves to DB and pushes via socket in one call.
+// --- create -------------------------------------------------------------------
+// Central function - saves to DB and pushes via socket in one call.
 // All controllers use this, never touch the model directly.
 //
-// userId  — ObjectId or string — who receives the notification
-// type    — one of the enum values in notification.model
-// title   — short heading shown in bell dropdown
-// message — longer description
-// link    — frontend route to navigate to on click (optional)
+// userId  - ObjectId or string - who receives the notification
+// type    - one of the enum values in notification.model
+// title   - short heading shown in bell dropdown
+// message - longer description
+// link    - frontend route to navigate to on click (optional)
 
 
 async function create(userId, type, title, message, link = null) {
@@ -48,7 +48,7 @@ async function create(userId, type, title, message, link = null) {
 }
 
 
-// ─── createMany ──────────────────────────────────────────────────────────────
+// --- createMany --------------------------------------------------------------
 // Send the same notification to multiple users (e.g. mention multiple people)
 async function createMany(userIds, type, title, message, link = null) {
     const unique = [...new Set(userIds.map(id => id.toString()))].filter(Boolean)

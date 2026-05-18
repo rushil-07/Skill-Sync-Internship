@@ -27,7 +27,7 @@ const initSocket = (httpServer) => {
 // Called from notification.service.js to emit to a specific user
 const getIO = () => {
     if (!io) {
-        // Not initialized yet — return null silently
+        // Not initialized yet - return null silently
         // Notifications are still saved to DB even without socket
         return null
     }

@@ -49,14 +49,14 @@ function enrichPMAlert(alert) {
     return enriched
 }
 
-// ─── GET /api/pm/dashboard ────────────────────────────────────────────────────
+// --- GET /api/pm/dashboard ----------------------------------------------------
 // Returns everything the PM dashboard needs in one request
 async function getPMDashboard(req, res) {
     try {
         const pmId = req.user.id
         const pmUser = await userModel.findById(pmId).select('username pm_alert_responses')
 
-        // ── 1. Projects created by this PM ───────────────────────────────────
+        // -- 1. Projects created by this PM -----------------------------------
         const projects = await projectModel
             .find({ created_by: pmId })
             .select('name description status start_date end_date ai_success_score team_members created_at')
@@ -90,14 +90,14 @@ async function getPMDashboard(req, res) {
 
         const projectIds = projects.map(p => p._id)
 
-        // ── 2. All tasks across PM's projects ─────────────────────────────────
+        // -- 2. All tasks across PM's projects ---------------------------------
         const allTasks = await taskModel
             .find({ project_id: { $in: projectIds } })
             .populate('assigned_to', 'username profile_picture_url')
             .select('title status priority due_date project_id assigned_to created_at')
             .lean()
 
-        // ── 3. Task counts per project ────────────────────────────────────────
+        // -- 3. Task counts per project ----------------------------------------
         const tasksByProject = {}
         for (const task of allTasks) {
             const pid = task.project_id.toString()
@@ -108,7 +108,7 @@ async function getPMDashboard(req, res) {
             tasksByProject[pid].total++
         }
 
-        // ── 4. Build project summaries with progress % ────────────────────────
+        // -- 4. Build project summaries with progress % ------------------------
         const projectSummaries = projects.map(p => {
             const pid   = p._id.toString()
             const tData = tasksByProject[pid] || { TODO: 0, IN_PROGRESS: 0, IN_REVIEW: 0, DONE: 0, total: 0 }
@@ -136,7 +136,7 @@ async function getPMDashboard(req, res) {
             }
         })
 
-        // ── 5. Stat cards ─────────────────────────────────────────────────────
+        // -- 5. Stat cards -----------------------------------------------------
         const stats = {
             total_projects:  projects.length,
             active_projects: projects.filter(p => p.status === 'ACTIVE').length,
@@ -150,7 +150,7 @@ async function getPMDashboard(req, res) {
             )].length,
         }
 
-        // ── 6. Upcoming deadlines (tasks due in next 7 days, not done) ────────
+        // -- 6. Upcoming deadlines (tasks due in next 7 days, not done) --------
         const sevenDaysFromNow = new Date()
         sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7)
 
@@ -169,7 +169,7 @@ async function getPMDashboard(req, res) {
                 assigned_to: t.assigned_to,
             }))
 
-        // ── 7. AI Alerts ──────────────────────────────────────────────────────
+        // -- 7. AI Alerts ------------------------------------------------------
         // Generate real alerts based on actual data
         const alerts = []
 
@@ -226,7 +226,7 @@ async function getPMDashboard(req, res) {
             }
         }
 
-        // ── 8. Team capacity overview ──────────────────────────────────────────
+        // -- 8. Team capacity overview ------------------------------------------
         let visibleAlerts = alerts.map(enrichPMAlert)
         const currentAlertKeys = new Set(visibleAlerts.map(alert => alert.alert_key))
         const storedResponses = pmUser?.pm_alert_responses || []
@@ -251,7 +251,7 @@ async function getPMDashboard(req, res) {
             availability_hours_per_week: m.availability_hours_per_week || 40,
         })).sort((a, b) => b.current_capacity_percentage - a.current_capacity_percentage)
 
-        // ── 9. Tasks by status (for chart) ────────────────────────────────────
+        // -- 9. Tasks by status (for chart) ------------------------------------
         const taskStatusChart = {
             TODO:        allTasks.filter(t => t.status === 'TODO').length,
             IN_PROGRESS: allTasks.filter(t => t.status === 'IN_PROGRESS').length,
@@ -275,14 +275,14 @@ async function getPMDashboard(req, res) {
     }
 }
 
-// ─── GET /api/pm/project/:projectId/dashboard ─────────────────────────────────
-// Per-project dashboard — SRS 4.7 Project Dashboard:
+// --- GET /api/pm/project/:projectId/dashboard ---------------------------------
+// Per-project dashboard - SRS 4.7 Project Dashboard:
 // Project Progress, Tasks by Status, Team Workload, AI Score, Milestones, Risk Alerts, Recent Activity
 async function getProjectDashboard(req, res) {
     try {
         const { projectId } = req.params
 
-        // ── Fetch project + tasks in parallel ─────────────────────────────────
+        // -- Fetch project + tasks in parallel ---------------------------------
         const [project, tasks] = await Promise.all([
             projectModel
                 .findById(projectId)
@@ -298,7 +298,7 @@ async function getProjectDashboard(req, res) {
 
         if (!project) return res.status(404).json({ message: 'Project not found' })
 
-        // ── 1. Project Progress ───────────────────────────────────────────────
+        // -- 1. Project Progress -----------------------------------------------
         const total    = tasks.length
         const done     = tasks.filter(t => t.status === 'DONE').length
         const progress = total > 0 ? Math.round((done / total) * 100) : 0
@@ -313,7 +313,7 @@ async function getProjectDashboard(req, res) {
             ? Math.min(100, Math.max(0, Math.round(((duration - daysLeft) / duration) * 100)))
             : null
 
-        // ── 2. Tasks by Status ────────────────────────────────────────────────
+        // -- 2. Tasks by Status ------------------------------------------------
         const tasksByStatus = {
             TODO:        tasks.filter(t => t.status === 'TODO').length,
             IN_PROGRESS: tasks.filter(t => t.status === 'IN_PROGRESS').length,
@@ -334,7 +334,7 @@ async function getProjectDashboard(req, res) {
             t.due_date && new Date(t.due_date) < now && t.status !== 'DONE'
         )
 
-        // ── 3. Team Workload Distribution ─────────────────────────────────────
+        // -- 3. Team Workload Distribution -------------------------------------
         const tasksByMember = {}
         for (const task of tasks) {
             if (!task.assigned_to) continue
@@ -373,7 +373,7 @@ async function getProjectDashboard(req, res) {
             }
         }).sort((a, b) => b.total - a.total)
 
-        // ── 4. Upcoming Milestones ─────────────────────────────────────────────
+        // -- 4. Upcoming Milestones ---------------------------------------------
         const thirtyDays = new Date()
         thirtyDays.setDate(thirtyDays.getDate() + 30)
 
@@ -391,7 +391,7 @@ async function getProjectDashboard(req, res) {
             ? Math.round((completedMilestones / project.milestones.length) * 100)
             : 0
 
-        // ── 5. Risk Alerts ─────────────────────────────────────────────────────
+        // -- 5. Risk Alerts -----------------------------------------------------
         const alerts = []
 
         // Overdue tasks
@@ -408,7 +408,7 @@ async function getProjectDashboard(req, res) {
         if (project.ai_success_score !== null && project.ai_success_score !== undefined && project.ai_success_score < 60) {
             alerts.push({
                 type:    'RISK',
-                message: `AI success score is ${project.ai_success_score}% — below healthy threshold`,
+                message: `AI success score is ${project.ai_success_score}% - below healthy threshold`,
                 hint:    'Consider adjusting team composition or extending the timeline',
                 severity: 'HIGH',
             })
@@ -432,7 +432,7 @@ async function getProjectDashboard(req, res) {
             alerts.push({
                 type:    'STALLED',
                 message: `Project is ${Math.round(timelinePct)}% through timeline but only ${progress}% complete`,
-                hint:    'Tasks may be blocked — review and unblock in-progress items',
+                hint:    'Tasks may be blocked - review and unblock in-progress items',
                 severity: 'HIGH',
             })
         }
@@ -460,7 +460,7 @@ async function getProjectDashboard(req, res) {
             })
         }
 
-        // ── 6. Recent Activity (from task history + comments) ─────────────────
+        // -- 6. Recent Activity (from task history + comments) -----------------
         const activity = []
 
         for (const task of tasks.slice(0, 20)) {
@@ -491,7 +491,7 @@ async function getProjectDashboard(req, res) {
 
         activity.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
 
-        // ── 7. Time tracking summary ───────────────────────────────────────────
+        // -- 7. Time tracking summary -------------------------------------------
         const totalMinutesLogged = tasks.reduce((sum, t) => sum + (t.total_time_minutes || 0), 0)
 
         res.status(200).json({

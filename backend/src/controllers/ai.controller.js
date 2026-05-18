@@ -2,6 +2,7 @@ const aiService = require('../services/ai.service')
 const path = require('path')
 const mammoth = require('mammoth')
 const { PDFParse } = require('pdf-parse')
+const imagekitService = require('../services/imagekit.service')
 
 async function extractBriefTextFromFile(file) {
     if (!file) return ''
@@ -96,6 +97,12 @@ async function getTeamAssembly(req, res) {
 
 async function parseBrief(req, res) {
     try {
+        if (req.file && !imagekitService.isConfigured()) {
+            const error = new Error('ImageKit is not configured. Add IMAGEKIT_PRIVATE_KEY to backend/.env and restart the backend.')
+            error.statusCode = 503
+            throw error
+        }
+
         const extractedText = await extractBriefTextFromFile(req.file)
         const briefText = extractedText || req.body?.brief_text
 
@@ -104,10 +111,21 @@ async function parseBrief(req, res) {
             req.body?.project_name
         )
 
+        let uploadedFile = null
+        if (req.file) {
+            uploadedFile = await imagekitService.uploadFile(req.file, {
+                folder: imagekitService.getConfig().projectBriefsFolder,
+                tags: ['skillsync', 'project-brief'],
+            })
+        }
+
         res.status(200).json({
             ...result,
             source: req.file ? 'file_upload' : 'pasted_text',
             uploaded_file_name: req.file?.originalname || null,
+            uploaded_file: uploadedFile,
+            uploaded_file_url: uploadedFile?.url || null,
+            uploaded_file_id: uploadedFile?.file_id || null,
         })
     } catch (error) {
         console.error('parseBrief error:', error)

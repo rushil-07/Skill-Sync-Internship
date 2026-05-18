@@ -3,8 +3,9 @@ const projectModel = require('../models/project.model')
 const userModel    = require('../models/user.model')
 const notifService = require('../services/notification.service')
 const { suggestTaskAssignees, refreshProjectAnalytics } = require('../services/ai.service')
+const imagekitService = require('../services/imagekit.service')
 
-// ─── Helper: extract @mentions from comment text ──────────────────────────────
+// --- Helper: extract @mentions from comment text ------------------------------
 // Finds @username patterns and resolves them to user IDs
 async function extractMentions(content) {
     const matches = content.match(/@(\w+)/g)
@@ -15,12 +16,12 @@ async function extractMentions(content) {
 }
 
 
-// ═════════════════════════════════════════════════════════════════════════════
+// =============================================================================
 // TASK CRUD
-// ═════════════════════════════════════════════════════════════════════════════
+// =============================================================================
 
-// ─── POST /api/tasks ──────────────────────────────────────────────────────────
-// Create a task — PM only
+// --- POST /api/tasks ----------------------------------------------------------
+// Create a task - PM only
 // Body: { title, description, project_id, assigned_to, priority, due_date, dependencies }
 async function createTask(req, res) {
     try {
@@ -71,7 +72,7 @@ async function createTask(req, res) {
             }
         }
 
-        // ── Notify assignee ───────────────────────────────────────────────────
+        // -- Notify assignee ---------------------------------------------------
         if (finalAssigneeId && finalAssigneeId.toString() !== req.user.id) {
             await notifService.create(
                 finalAssigneeId,
@@ -108,8 +109,8 @@ async function createTask(req, res) {
 }
 
 
-// ─── GET /api/tasks/project/:projectId ───────────────────────────────────────
-// Get all tasks for a project — any authenticated user
+// --- GET /api/tasks/project/:projectId ---------------------------------------
+// Get all tasks for a project - any authenticated user
 // Supports ?status=TODO&assigned_to=userId&priority=HIGH
 async function getTasksByProject(req, res) {
     try {
@@ -137,7 +138,7 @@ async function getTasksByProject(req, res) {
 }
 
 
-// ─── GET /api/tasks/my-tasks ──────────────────────────────────────────────────
+// --- GET /api/tasks/my-tasks --------------------------------------------------
 // Get all tasks assigned to the logged-in user
 async function getMyTasks(req, res) {
     try {
@@ -159,7 +160,7 @@ async function getMyTasks(req, res) {
 }
 
 
-// ─── GET /api/tasks/:id ───────────────────────────────────────────────────────
+// --- GET /api/tasks/:id -------------------------------------------------------
 // Get single task with full details
 async function getTaskById(req, res) {
     try {
@@ -184,8 +185,8 @@ async function getTaskById(req, res) {
 }
 
 
-// ─── PUT /api/tasks/:id ───────────────────────────────────────────────────────
-// Update task — PM can update anything, Member can only update status
+// --- PUT /api/tasks/:id -------------------------------------------------------
+// Update task - PM can update anything, Member can only update status
 // Body: any subset of { title, description, assigned_to, status, priority, due_date, dependencies }
 async function updateTask(req, res) {
     try {
@@ -215,7 +216,7 @@ async function updateTask(req, res) {
 
         await task.save()
 
-        // ── Notifications on update ───────────────────────────────────────────
+        // -- Notifications on update -------------------------------------------
         const origAssignee = task.assigned_to
         if (req.body.assigned_to && req.body.assigned_to.toString() !== req.user.id) {
             await notifService.create(
@@ -254,8 +255,8 @@ async function updateTask(req, res) {
 }
 
 
-// ─── DELETE /api/tasks/:id ────────────────────────────────────────────────────
-// Delete task — PM only
+// --- DELETE /api/tasks/:id ----------------------------------------------------
+// Delete task - PM only
 async function deleteTask(req, res) {
     try {
         const task = await taskModel.findByIdAndDelete(req.params.id)
@@ -269,11 +270,11 @@ async function deleteTask(req, res) {
 }
 
 
-// ═════════════════════════════════════════════════════════════════════════════
+// =============================================================================
 // SUBTASKS
-// ═════════════════════════════════════════════════════════════════════════════
+// =============================================================================
 
-// ─── POST /api/tasks/:id/subtasks ────────────────────────────────────────────
+// --- POST /api/tasks/:id/subtasks --------------------------------------------
 async function addSubtask(req, res) {
     try {
         const { title } = req.body
@@ -297,7 +298,7 @@ async function addSubtask(req, res) {
 }
 
 
-// ─── PUT /api/tasks/:id/subtasks/:subtaskId ───────────────────────────────────
+// --- PUT /api/tasks/:id/subtasks/:subtaskId -----------------------------------
 // Toggle subtask completed
 async function toggleSubtask(req, res) {
     try {
@@ -319,7 +320,7 @@ async function toggleSubtask(req, res) {
 }
 
 
-// ─── DELETE /api/tasks/:id/subtasks/:subtaskId ────────────────────────────────
+// --- DELETE /api/tasks/:id/subtasks/:subtaskId --------------------------------
 async function deleteSubtask(req, res) {
     try {
         const task = await taskModel.findById(req.params.id)
@@ -338,12 +339,12 @@ async function deleteSubtask(req, res) {
 }
 
 
-// ═════════════════════════════════════════════════════════════════════════════
+// =============================================================================
 // COMMENTS
-// ═════════════════════════════════════════════════════════════════════════════
+// =============================================================================
 
-// ─── POST /api/tasks/:id/comments ────────────────────────────────────────────
-// Add a comment — parses @mentions automatically
+// --- POST /api/tasks/:id/comments --------------------------------------------
+// Add a comment - parses @mentions automatically
 async function addComment(req, res) {
     try {
         const { content } = req.body
@@ -362,7 +363,7 @@ async function addComment(req, res) {
 
         await task.save()
 
-        // ── Notify mentioned users ────────────────────────────────────────────
+        // -- Notify mentioned users --------------------------------------------
         if (mentions.length > 0) {
             await notifService.createMany(
                 mentions.filter(id => id.toString() !== req.user.id),
@@ -373,7 +374,7 @@ async function addComment(req, res) {
             )
         }
 
-        // ── Notify task assignee (if not the commenter) ───────────────────────
+        // -- Notify task assignee (if not the commenter) -----------------------
         if (task.assigned_to && task.assigned_to.toString() !== req.user.id) {
             const alreadyMentioned = mentions.some(m => m.toString() === task.assigned_to.toString())
             if (!alreadyMentioned) {
@@ -402,8 +403,8 @@ async function addComment(req, res) {
 }
 
 
-// ─── DELETE /api/tasks/:id/comments/:commentId ───────────────────────────────
-// Delete own comment — or PM can delete any comment
+// --- DELETE /api/tasks/:id/comments/:commentId -------------------------------
+// Delete own comment - or PM can delete any comment
 async function deleteComment(req, res) {
     try {
         const task = await taskModel.findById(req.params.id)
@@ -429,11 +430,84 @@ async function deleteComment(req, res) {
 }
 
 
-// ═════════════════════════════════════════════════════════════════════════════
-// TIME TRACKING
-// ═════════════════════════════════════════════════════════════════════════════
+// =============================================================================
+// ATTACHMENTS
+// =============================================================================
 
-// ─── POST /api/tasks/:id/timer/start ─────────────────────────────────────────
+// --- POST /api/tasks/:id/attachments -----------------------------------------
+// Upload a task attachment to ImageKit and store its metadata on the task
+async function uploadAttachment(req, res) {
+    try {
+        if (!req.file) return res.status(400).json({ message: 'attachment file is required' })
+
+        const task = await taskModel.findById(req.params.id)
+        if (!task) return res.status(404).json({ message: 'Task not found' })
+
+        const uploaded = await imagekitService.uploadFile(req.file, {
+            folder: `${imagekitService.getConfig().taskAttachmentsFolder}/${task._id}`,
+            tags: ['skillsync', 'task-attachment'],
+        })
+
+        task.attachments.push({
+            ...uploaded,
+            uploaded_by: req.user.id,
+        })
+        task.logHistory(req.user.id, 'attachment_added', null, uploaded.name)
+        await task.save()
+
+        res.status(201).json({
+            message: 'Attachment uploaded',
+            attachment: task.attachments[task.attachments.length - 1],
+            task,
+        })
+    } catch (error) {
+        console.error('uploadAttachment error:', error)
+        res.status(error.statusCode || 500).json({ message: error.message || 'Server error' })
+    }
+}
+
+
+// --- DELETE /api/tasks/:id/attachments/:attachmentId -------------------------
+// Remove attachment metadata and delete the stored ImageKit file when possible
+async function deleteAttachment(req, res) {
+    try {
+        const task = await taskModel.findById(req.params.id)
+        if (!task) return res.status(404).json({ message: 'Task not found' })
+
+        const attachment = task.attachments.id(req.params.attachmentId)
+        if (!attachment) return res.status(404).json({ message: 'Attachment not found' })
+
+        const isOwner = attachment.uploaded_by?.toString() === req.user.id
+        const isPM = req.user.role === 'PROJECT_MANAGER' || req.user.role === 'ADMIN'
+        if (!isOwner && !isPM) {
+            return res.status(403).json({ message: 'You can only delete your own attachments' })
+        }
+
+        if (attachment.file_id) {
+            await imagekitService.deleteFile(attachment.file_id)
+        }
+
+        const attachmentName = attachment.name
+        attachment.deleteOne()
+        task.logHistory(req.user.id, 'attachment_deleted', attachmentName, null)
+        await task.save()
+
+        res.status(200).json({
+            message: 'Attachment deleted',
+            task,
+        })
+    } catch (error) {
+        console.error('deleteAttachment error:', error)
+        res.status(error.statusCode || 500).json({ message: error.message || 'Server error' })
+    }
+}
+
+
+// =============================================================================
+// TIME TRACKING
+// =============================================================================
+
+// --- POST /api/tasks/:id/timer/start -----------------------------------------
 async function startTimer(req, res) {
     try {
         const task = await taskModel.findById(req.params.id)
@@ -458,7 +532,7 @@ async function startTimer(req, res) {
 }
 
 
-// ─── POST /api/tasks/:id/timer/stop ──────────────────────────────────────────
+// --- POST /api/tasks/:id/timer/stop ------------------------------------------
 async function stopTimer(req, res) {
     try {
         const task = await taskModel.findById(req.params.id)
@@ -497,7 +571,7 @@ async function stopTimer(req, res) {
 }
 
 
-// ─── POST /api/tasks/:id/timer/manual ────────────────────────────────────────
+// --- POST /api/tasks/:id/timer/manual ----------------------------------------
 // Log a manual time entry
 // Body: { duration_minutes, note, date }
 async function logManualTime(req, res) {
@@ -549,6 +623,8 @@ module.exports = {
     deleteSubtask,
     addComment,
     deleteComment,
+    uploadAttachment,
+    deleteAttachment,
     startTimer,
     stopTimer,
     logManualTime,

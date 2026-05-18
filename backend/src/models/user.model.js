@@ -1,15 +1,15 @@
 const mongoose = require('mongoose')
 
-// ─── Sub-schemas ──────────────────────────────────────────────────────────────
+// --- Sub-schemas --------------------------------------------------------------
 
-// SRS 6.3 — UserSkills (embedded as subdoc, references Skill collection)
+// SRS 6.3 - UserSkills (embedded as subdoc, references Skill collection)
 const userSkillSchema = new mongoose.Schema({
     skill_id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'skill',
-        required: false,   // not required — existing skills added before taxonomy existed won't have this
+        required: false,   // not required - existing skills added before taxonomy existed won't have this
     },
-    // Denormalized for performance — avoids populate on every profile load
+    // Denormalized for performance - avoids populate on every profile load
     skill_name: {
         type: String,
         required: true,
@@ -141,10 +141,10 @@ const notificationPreferencesSchema = new mongoose.Schema({
 }, { _id: false })
 
 
-// ─── Main User Schema ─────────────────────────────────────────────────────────
+// --- Main User Schema ---------------------------------------------------------
 const userSchema = new mongoose.Schema({
 
-    // ── Personal Info ──
+    // -- Personal Info --
     username: { type: String, required: true, unique: true, trim: true },
     email:    { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true },
@@ -156,11 +156,11 @@ const userSchema = new mongoose.Schema({
     bio:                 { type: String, trim: true },
     profile_picture_url: { type: String },
 
-    // ── Availability ──
+    // -- Availability --
     availability_hours_per_week:  { type: Number, default: 40, min: 0, max: 80 },
     current_capacity_percentage:  { type: Number, min: 0, max: 100, default: 0 },
 
-    // ── Skills — now references Skill collection ──────────────────────────────
+    // -- Skills - now references Skill collection ------------------------------
     // Each entry links to a canonical skill in the skills collection
     // skill_name is denormalized so profiles load fast without populating
     skills: {
@@ -168,7 +168,7 @@ const userSchema = new mongoose.Schema({
         default: [],
     },
 
-    // ── Project History ──
+    // -- Project History --
     project_history: [{
         project_id:      { type: mongoose.Schema.Types.ObjectId, ref: 'project' },
         role_in_project: { type: String },
@@ -177,18 +177,18 @@ const userSchema = new mongoose.Schema({
         completed_at:    { type: Date, default: null },
     }],
 
-    // ── Performance Metrics ──
+    // -- Performance Metrics --
     performance_metrics: { type: performanceMetricsSchema, default: () => ({}) },
 
-    // ── Learning Recommendations ──
+    // -- Learning Recommendations --
     learning_recommendations: { type: [learningRecommendationSchema], default: [] },
 
-    // ── Activity Feed ──
+    // -- Activity Feed --
     activity_feed: { type: [activitySchema], default: [] },
     pm_alert_responses: { type: [pmAlertResponseSchema], default: [] },
     notification_preferences: { type: notificationPreferencesSchema, default: () => ({}) },
 
-    // ── Password Reset ────────────────────────────────────────────────────────
+    // -- Password Reset --------------------------------------------------------
     reset_token:        { type: String, default: null },
     reset_token_expiry: { type: Date,   default: null },
 

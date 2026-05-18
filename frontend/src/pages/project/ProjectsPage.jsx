@@ -333,6 +333,7 @@ const ProjectModal = ({ mode = 'create', initial = {}, onClose, onSuccess }) => 
   const [parserPreview, setParserPreview] = useState(null)
   const [parsedSkills, setParsedSkills] = useState([])
   const [parsedMilestones, setParsedMilestones] = useState([])
+  const [parsedBriefFile, setParsedBriefFile] = useState(null)
 
   const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }))
 
@@ -363,6 +364,7 @@ const ProjectModal = ({ mode = 'create', initial = {}, onClose, onSuccess }) => 
         ...res.data,
         extraction_notes: nextNotes,
       })
+      setParsedBriefFile(res.data.uploaded_file || null)
       setParserNotes(nextNotes)
     } catch (err) {
       setParserError(err.response?.data?.message || 'Failed to parse project brief.')
@@ -400,6 +402,7 @@ const ProjectModal = ({ mode = 'create', initial = {}, onClose, onSuccess }) => 
     if (form.start_date) payload.start_date = new Date(form.start_date).toISOString()
     if (form.end_date) payload.end_date = new Date(form.end_date).toISOString()
     if (form.budget) payload.budget = Number(form.budget)
+    if (parsedBriefFile) payload.project_brief = parsedBriefFile
 
     try {
       if (mode === 'create') {
@@ -947,4 +950,3 @@ export default function ProjectsPage() {
     </div>
   )
 }
-

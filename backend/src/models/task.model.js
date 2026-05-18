@@ -1,8 +1,8 @@
 const mongoose = require('mongoose')
 
-// ─── Sub-schemas ──────────────────────────────────────────────────────────────
+// --- Sub-schemas --------------------------------------------------------------
 
-// SRS 4.5 — Subtasks
+// SRS 4.5 - Subtasks
 const subtaskSchema = new mongoose.Schema({
     title: {
         type: String,
@@ -20,7 +20,7 @@ const subtaskSchema = new mongoose.Schema({
 }, { _id: true })
 
 
-// SRS 4.5 — Comments (thread-based with @mentions)
+// SRS 4.5 - Comments (thread-based with @mentions)
 const commentSchema = new mongoose.Schema({
     author: {
         type: mongoose.Schema.Types.ObjectId,
@@ -51,7 +51,7 @@ const commentSchema = new mongoose.Schema({
 }, { _id: true })
 
 
-// SRS 4.5 — Time tracking entries
+// SRS 4.5 - Time tracking entries
 const timeEntrySchema = new mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
@@ -77,7 +77,7 @@ const timeEntrySchema = new mongoose.Schema({
 }, { _id: true })
 
 
-// SRS 4.5 — Task history (audit trail of all changes)
+// SRS 4.5 - Task history (audit trail of all changes)
 const historySchema = new mongoose.Schema({
     changed_by: {
         type: mongoose.Schema.Types.ObjectId,
@@ -101,10 +101,10 @@ const historySchema = new mongoose.Schema({
 }, { _id: true })
 
 
-// ─── Main Task Schema ─────────────────────────────────────────────────────────
+// --- Main Task Schema ---------------------------------------------------------
 const taskSchema = new mongoose.Schema({
 
-    // ── Core fields (SRS 4.5) ──
+    // -- Core fields (SRS 4.5) --
     title: {
         type: String,
         required: true,
@@ -136,14 +136,14 @@ const taskSchema = new mongoose.Schema({
         default: null,
     },
 
-    // SRS 4.5 — Status: To Do → In Progress → In Review → Done
+    // SRS 4.5 - Status: To Do -> In Progress -> In Review -> Done
     status: {
         type: String,
         enum: ['TODO', 'IN_PROGRESS', 'IN_REVIEW', 'DONE'],
         default: 'TODO',
     },
 
-    // SRS 4.5 — Priority
+    // SRS 4.5 - Priority
     priority: {
         type: String,
         enum: ['LOW', 'MEDIUM', 'HIGH', 'URGENT'],
@@ -155,26 +155,26 @@ const taskSchema = new mongoose.Schema({
         default: null,
     },
 
-    // SRS 4.5 — Task Dependencies
+    // SRS 4.5 - Task Dependencies
     // Tasks that must be DONE before this task can start
     dependencies: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'task',
     }],
 
-    // SRS 4.5 — Subtasks
+    // SRS 4.5 - Subtasks
     subtasks: {
         type: [subtaskSchema],
         default: [],
     },
 
-    // SRS 4.5 — Comments (thread-based)
+    // SRS 4.5 - Comments (thread-based)
     comments: {
         type: [commentSchema],
         default: [],
     },
 
-    // SRS 4.5 — Time Tracking
+    // SRS 4.5 - Time Tracking
     time_entries: {
         type: [timeEntrySchema],
         default: [],
@@ -192,17 +192,20 @@ const taskSchema = new mongoose.Schema({
         started_at: { type: Date, default: null },
     },
 
-    // SRS 4.5 — File Attachments (URLs — actual files stored in S3/Cloudinary)
+    // SRS 4.5 - File Attachments (actual files stored in ImageKit)
     attachments: [{
+        file_id:    { type: String },
         name:       { type: String, required: true },
         url:        { type: String, required: true },
+        thumbnail_url: { type: String, default: null },
         type:       { type: String },              // mime type e.g. 'image/png', 'application/pdf'
         size_bytes: { type: Number },
+        imagekit_path: { type: String },
         uploaded_by:{ type: mongoose.Schema.Types.ObjectId, ref: 'user' },
         uploaded_at:{ type: Date, default: Date.now },
     }],
 
-    // SRS 4.5 — Task History (audit trail)
+    // SRS 4.5 - Task History (audit trail)
     history: {
         type: [historySchema],
         default: [],
@@ -224,14 +227,14 @@ const taskSchema = new mongoose.Schema({
 })
 
 
-// ─── Indexes ──────────────────────────────────────────────────────────────────
+// --- Indexes ------------------------------------------------------------------
 taskSchema.index({ project_id: 1 })            // fetch all tasks for a project fast
 taskSchema.index({ assigned_to: 1 })           // fetch tasks assigned to a user fast
 taskSchema.index({ status: 1 })
 taskSchema.index({ project_id: 1, status: 1 }) // kanban board query
 
 
-// ─── Helper: log a history entry ──────────────────────────────────────────────
+// --- Helper: log a history entry ----------------------------------------------
 taskSchema.methods.logHistory = function (userId, field, oldValue, newValue) {
     this.history.push({
         changed_by: userId,

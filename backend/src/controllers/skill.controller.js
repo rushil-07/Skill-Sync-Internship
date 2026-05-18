@@ -2,12 +2,12 @@ const skillModel   = require('../models/skill.model')
 const userModel    = require('../models/user.model')
 const projectModel = require('../models/project.model')
 
-// ═════════════════════════════════════════════════════════════════════════════
+// =============================================================================
 // SKILL TAXONOMY (Admin manages the global skill list)
-// ═════════════════════════════════════════════════════════════════════════════
+// =============================================================================
 
-// ─── GET /api/skills ──────────────────────────────────────────────────────────
-// List all skills — supports ?category=Frontend&search=react&limit=50
+// --- GET /api/skills ----------------------------------------------------------
+// List all skills - supports ?category=Frontend&search=react&limit=50
 async function getAllSkills(req, res) {
     try {
         const query = {}
@@ -43,8 +43,8 @@ async function getAllSkills(req, res) {
 }
 
 
-// ─── POST /api/skills ─────────────────────────────────────────────────────────
-// Create a new skill in the taxonomy — Admin only
+// --- POST /api/skills ---------------------------------------------------------
+// Create a new skill in the taxonomy - Admin only
 // Body: { name, category, description }
 async function createSkill(req, res) {
     try {
@@ -76,8 +76,8 @@ async function createSkill(req, res) {
 }
 
 
-// ─── PUT /api/skills/:skillId ─────────────────────────────────────────────────
-// Update skill — Admin only
+// --- PUT /api/skills/:skillId -------------------------------------------------
+// Update skill - Admin only
 async function updateSkill(req, res) {
     try {
         const { name, category, description, verified } = req.body
@@ -100,8 +100,8 @@ async function updateSkill(req, res) {
 }
 
 
-// ─── DELETE /api/skills/:skillId ──────────────────────────────────────────────
-// Delete skill from taxonomy — Admin only
+// --- DELETE /api/skills/:skillId ----------------------------------------------
+// Delete skill from taxonomy - Admin only
 // Also removes it from any user profiles and project required_skills
 async function deleteSkill(req, res) {
     try {
@@ -131,11 +131,11 @@ async function deleteSkill(req, res) {
 }
 
 
-// ═════════════════════════════════════════════════════════════════════════════
+// =============================================================================
 // USER PROFILE SKILLS (replaces old profile.controller skill handlers)
-// ═════════════════════════════════════════════════════════════════════════════
+// =============================================================================
 
-// ─── POST /api/skills/profile/add ────────────────────────────────────────────
+// --- POST /api/skills/profile/add --------------------------------------------
 // Add a skill to logged-in user's profile
 // Body: { skill_name, proficiency_level } OR { skill_id, proficiency_level }
 async function addSkillToProfile(req, res) {
@@ -151,7 +151,7 @@ async function addSkillToProfile(req, res) {
             return res.status(400).json({ message: `proficiency_level must be one of: ${VALID.join(', ')}` })
         }
 
-        // ── Resolve the skill from taxonomy ──────────────────────────────────
+        // -- Resolve the skill from taxonomy ----------------------------------
         let skill
 
         if (skill_id) {
@@ -171,9 +171,9 @@ async function addSkillToProfile(req, res) {
             return res.status(400).json({ message: 'Either skill_id or skill_name is required' })
         }
 
-        // ── Use raw MongoDB update to bypass Mongoose validation ──────────────
+        // -- Use raw MongoDB update to bypass Mongoose validation --------------
         // Existing users may have skills stored as plain strings or objects
-        // without skill_id — Mongoose validation would reject save() on those.
+        // without skill_id - Mongoose validation would reject save() on those.
         const mongoose = require('mongoose')
         const usersCol = userModel.db.db.collection('users')
         const userId   = new mongoose.Types.ObjectId(req.user.id)
@@ -209,13 +209,13 @@ async function addSkillToProfile(req, res) {
         const activityEntry = {
             _id:         new mongoose.Types.ObjectId(),
             action:      'Added skill',
-            target:      `${skill.name} — ${proficiency_level}`,
+            target:      `${skill.name} - ${proficiency_level}`,
             target_type: 'SKILL',
             target_id:   skill._id,
             created_at:  new Date(),
         }
 
-        // Single atomic update — push skill + prepend activity + cap feed at 50
+        // Single atomic update - push skill + prepend activity + cap feed at 50
         await usersCol.updateOne(
             { _id: userId },
             {
@@ -245,7 +245,7 @@ async function addSkillToProfile(req, res) {
 }
 
 
-// ─── PUT /api/skills/profile/:userSkillId ────────────────────────────────────
+// --- PUT /api/skills/profile/:userSkillId ------------------------------------
 // Update proficiency level of a skill in user's profile
 async function updateProfileSkill(req, res) {
     try {
@@ -268,7 +268,7 @@ async function updateProfileSkill(req, res) {
         }
         if (req.body.last_used) skill.last_used = new Date(req.body.last_used)
 
-        user.logActivity('Updated skill', `${skill.skill_name} → ${proficiency_level}`, 'SKILL')
+        user.logActivity('Updated skill', `${skill.skill_name} -> ${proficiency_level}`, 'SKILL')
         await user.save()
 
         res.status(200).json({ message: 'Skill updated', skill })
@@ -280,7 +280,7 @@ async function updateProfileSkill(req, res) {
 }
 
 
-// ─── DELETE /api/skills/profile/:userSkillId ─────────────────────────────────
+// --- DELETE /api/skills/profile/:userSkillId ---------------------------------
 // Remove a skill from user's profile
 async function removeSkillFromProfile(req, res) {
     try {
@@ -326,12 +326,12 @@ async function removeSkillFromProfile(req, res) {
 }
 
 
-// ═════════════════════════════════════════════════════════════════════════════
+// =============================================================================
 // PROJECT REQUIRED SKILLS
-// ═════════════════════════════════════════════════════════════════════════════
+// =============================================================================
 
-// ─── POST /api/skills/project/:projectId/add ─────────────────────────────────
-// Add a required skill to a project — PM only
+// --- POST /api/skills/project/:projectId/add ---------------------------------
+// Add a required skill to a project - PM only
 // Body: { skill_id, required_proficiency }
 async function addRequiredSkill(req, res) {
     try {
@@ -375,8 +375,8 @@ async function addRequiredSkill(req, res) {
 }
 
 
-// ─── DELETE /api/skills/project/:projectId/:reqSkillId ───────────────────────
-// Remove a required skill from a project — PM only
+// --- DELETE /api/skills/project/:projectId/:reqSkillId -----------------------
+// Remove a required skill from a project - PM only
 async function removeRequiredSkill(req, res) {
     try {
         const project = await projectModel.findById(req.params.projectId)
@@ -398,11 +398,11 @@ async function removeRequiredSkill(req, res) {
 }
 
 
-// ═════════════════════════════════════════════════════════════════════════════
+// =============================================================================
 // SKILL GAP ANALYSIS
-// ═════════════════════════════════════════════════════════════════════════════
+// =============================================================================
 
-// ─── GET /api/skills/gap/:projectId ──────────────────────────────────────────
+// --- GET /api/skills/gap/:projectId ------------------------------------------
 // Compare project required skills vs team member skills
 // Returns gap analysis: which skills are missing / under-proficient
 async function getSkillGap(req, res) {

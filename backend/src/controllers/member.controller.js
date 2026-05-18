@@ -4,7 +4,7 @@ const userModel    = require('../models/user.model')
 const notificationModel = require('../models/notification.model')
 const notifService = require('../services/notification.service')
 
-// ─── GET /api/member/dashboard ────────────────────────────────────────────────
+// --- GET /api/member/dashboard ------------------------------------------------
 // Returns everything the Member dashboard needs in one request
 // SRS 4.7 Personal Dashboard:
 //   My Tasks, Available Projects (skill-matched), Current Workload,
@@ -13,7 +13,7 @@ async function getMemberDashboard(req, res) {
     try {
         const memberId = req.user.id
 
-        // ── Fetch all needed data in parallel ─────────────────────────────────
+        // -- Fetch all needed data in parallel ---------------------------------
         const [user, myTasks, memberProjects] = await Promise.all([
             userModel.findById(memberId).select('-password'),
             taskModel.find({ assigned_to: memberId })
@@ -26,7 +26,7 @@ async function getMemberDashboard(req, res) {
 
         if (!user) return res.status(404).json({ message: 'User not found' })
 
-        // ── 1. My Tasks — grouped by status ───────────────────────────────────
+        // -- 1. My Tasks - grouped by status -----------------------------------
         const tasksByStatus = {
             TODO:        myTasks.filter(t => t.status === 'TODO'),
             IN_PROGRESS: myTasks.filter(t => t.status === 'IN_PROGRESS'),
@@ -45,7 +45,7 @@ async function getMemberDashboard(req, res) {
             ).length,
         }
 
-        // ── 2. Upcoming Deadlines — tasks due in next 7 days ──────────────────
+        // -- 2. Upcoming Deadlines - tasks due in next 7 days ------------------
         const sevenDays = new Date()
         sevenDays.setDate(sevenDays.getDate() + 7)
 
@@ -63,8 +63,8 @@ async function getMemberDashboard(req, res) {
                 project:    t.project_id,
             }))
 
-        // ── 3. Skill-matched Available Projects ───────────────────────────────
-        // SRS 4.4.2 — find projects whose required_skills overlap with user's skills
+        // -- 3. Skill-matched Available Projects -------------------------------
+        // SRS 4.4.2 - find projects whose required_skills overlap with user's skills
         const userSkillIds = user.skills.map(s => s.skill_id?.toString()).filter(Boolean)
         const userSkillNames = user.skills.map(s => s.skill_name?.toLowerCase()).filter(Boolean)
 
@@ -149,7 +149,7 @@ async function getMemberDashboard(req, res) {
             )
         }
 
-        // ── 4. Current Workload (hours this week) ─────────────────────────────
+        // -- 4. Current Workload (hours this week) -----------------------------
         // Based on tasks in progress + availability hours
         const now = new Date()
         const weekStart = new Date(now)
@@ -173,7 +173,7 @@ async function getMemberDashboard(req, res) {
             active_tasks:             tasksByStatus.IN_PROGRESS.length + tasksByStatus.IN_REVIEW.length,
         }
 
-        // ── 5. Skill Development Recommendations (from profile) ───────────────
+        // -- 5. Skill Development Recommendations (from profile) ---------------
         const recommendations = (user.learning_recommendations || [])
             .sort((a, b) => {
                 const statusOrder = { NOT_STARTED: 0, IN_PROGRESS: 1, COMPLETED: 2 }
@@ -186,13 +186,13 @@ async function getMemberDashboard(req, res) {
             })
             .slice(0, 5)
 
-        // ── 6. Recent Activity ────────────────────────────────────────────────
+        // -- 6. Recent Activity ------------------------------------------------
         const recentActivity = (user.activity_feed || []).slice(0, 10)
 
-        // ── 7. Performance Metrics ────────────────────────────────────────────
+        // -- 7. Performance Metrics --------------------------------------------
         const metrics = user.performance_metrics || {}
 
-        // ── 8. My Projects (unique projects from tasks) ───────────────────────
+        // -- 8. My Projects (unique projects from tasks) -----------------------
         const taskProgressByProject = {}
         for (const task of myTasks) {
             if (task.project_id) {

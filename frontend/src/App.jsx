@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import axios from 'axios'
 import AppNavbar from './components/AppNavbar'
+import Navbar from './components/Navbar'
 
 const API = 'http://localhost:3000'
 
@@ -41,6 +42,15 @@ function AuthLayout({ children }) {
   )
 }
 
+function PublicLayout({ children }) {
+  return (
+    <>
+      <Navbar />
+      {children}
+    </>
+  )
+}
+
 function RouteLoader() {
   return (
     <div className="min-h-screen bg-[#0F2027]">
@@ -54,8 +64,9 @@ function RouteLoader() {
   )
 }
 
-function renderLazyPage(element, useShell = false) {
+function renderLazyPage(element, useShell = false, usePublicShell = false) {
   const content = <Suspense fallback={<RouteLoader />}>{element}</Suspense>
+  if (usePublicShell) return <PublicLayout>{content}</PublicLayout>
   return useShell ? <AuthLayout>{content}</AuthLayout> : content
 }
 
@@ -76,9 +87,9 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={renderLazyPage(<HeroSection />)} />
-      <Route path="/features" element={renderLazyPage(<FeaturesPage />)} />
-      <Route path="/how-it-works" element={renderLazyPage(<HowItWorksPage />)} />
-      <Route path="/teams" element={renderLazyPage(<TeamsPage />)} />
+      <Route path="/features" element={renderLazyPage(<FeaturesPage />, false, true)} />
+      <Route path="/how-it-works" element={renderLazyPage(<HowItWorksPage />, false, true)} />
+      <Route path="/teams" element={renderLazyPage(<TeamsPage />, false, true)} />
 
       <Route path="/login" element={renderLazyPage(<LoginPage />)} />
       <Route path="/register" element={renderLazyPage(<RegisterPage />)} />

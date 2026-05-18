@@ -117,4 +117,8 @@ async function applyAutomaticSkillUpdates(projectId) {
 
 module.exports = {
     applyAutomaticSkillUpdates,
+    __test__: {
+        getLevelIndex,
+        getPromotedLevel,
+    },
 }

@@ -1,14 +1,14 @@
 const mongoose = require('mongoose')
 
-// ─── SRS 6.2 — Skills Table ───────────────────────────────────────────────────
-// Central skill taxonomy — managed by Admin
+// --- SRS 6.2 - Skills Table ---------------------------------------------------
+// Central skill taxonomy - managed by Admin
 // All user skills and project required_skills reference this collection
 
 const skillSchema = new mongoose.Schema({
     name: {
         type: String,
         required: true,
-        unique: true,       // "React", "Python", "Project Management" — globally unique
+        unique: true,       // "React", "Python", "Project Management" - globally unique
         trim: true,
     },
     category: {
@@ -37,7 +37,7 @@ const skillSchema = new mongoose.Schema({
     },
     usage_count: {
         type: Number,
-        default: 0,         // how many users have this skill — updated on add/remove
+        default: 0,         // how many users have this skill - updated on add/remove
     },
 }, {
     strict: 'throw',

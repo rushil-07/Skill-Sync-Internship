@@ -3,8 +3,8 @@ const projectModel = require('../models/project.model')
 const taskModel    = require('../models/task.model')
 const skillModel   = require('../models/skill.model')
 
-// ─── GET /api/admin/stats ─────────────────────────────────────────────────────
-// Returns org-wide user counts — shown on admin's own profile stats row
+// --- GET /api/admin/stats -----------------------------------------------------
+// Returns org-wide user counts - shown on admin's own profile stats row
 async function getAdminStats(req, res) {
     try {
         const [total, members, pms, admins] = await Promise.all([
@@ -27,8 +27,8 @@ async function getAdminStats(req, res) {
 }
 
 
-// ─── PUT /api/admin/users/:userId/role ────────────────────────────────────────
-// Change the role of any user — Admin only
+// --- PUT /api/admin/users/:userId/role ----------------------------------------
+// Change the role of any user - Admin only
 // Body: { role: 'MEMBER' | 'PROJECT_MANAGER' | 'ADMIN' }
 async function changeUserRole(req, res) {
     try {
@@ -74,8 +74,8 @@ async function changeUserRole(req, res) {
 }
 
 
-// ─── PUT /api/admin/users/:userId/verify-skill/:skillId ──────────────────────
-// Toggle verified flag on any user's skill — Admin only
+// --- PUT /api/admin/users/:userId/verify-skill/:skillId ----------------------
+// Toggle verified flag on any user's skill - Admin only
 async function verifyUserSkill(req, res) {
     try {
         const { userId, skillId } = req.params
@@ -109,7 +109,7 @@ async function verifyUserSkill(req, res) {
 }
 
 
-// ─── GET /api/admin/dashboard ─────────────────────────────────────────────────
+// --- GET /api/admin/dashboard -------------------------------------------------
 // Returns everything the Admin dashboard needs in one request
 // SRS: Total Users/Projects/Tasks, Skill Matrix, Capacity, Success Rates,
 //      Resource Utilization, Org-wide Skill Gap, Activity Logs
@@ -118,7 +118,7 @@ async function verifyUserSkill(req, res) {
 async function getAdminDashboard(req, res) {
     try {
 
-        // ── 1. Fetch all base data in parallel ────────────────────────────────
+        // -- 1. Fetch all base data in parallel --------------------------------
         const [users, projects, tasks, skills] = await Promise.all([
             userModel.find().select('-password').sort({ created_at: -1 }),
             projectModel.find().populate('created_by', 'username').sort({ created_at: -1 }),
@@ -126,7 +126,7 @@ async function getAdminDashboard(req, res) {
             skillModel.find().select('name category usage_count verified'),
         ])
 
-        // ── 2. Stat cards ─────────────────────────────────────────────────────
+        // -- 2. Stat cards -----------------------------------------------------
         const stats = {
             total_users:    users.length,
             total_members:  users.filter(u => u.role === 'MEMBER').length,
@@ -142,7 +142,7 @@ async function getAdminDashboard(req, res) {
             total_skills:   skills.length,
         }
 
-        // ── 3. Organizational Capacity Overview ───────────────────────────────
+        // -- 3. Organizational Capacity Overview -------------------------------
         // All users with their capacity %, sorted by load desc
         const capacity = users.map(u => ({
             _id:                        u._id,
@@ -164,7 +164,7 @@ async function getAdminDashboard(req, res) {
                 : 0,
         }
 
-        // ── 4. Project Success Rates ──────────────────────────────────────────
+        // -- 4. Project Success Rates ------------------------------------------
         const project_stats = {
             PLANNING:  projects.filter(p => p.status === 'PLANNING').length,
             ACTIVE:    projects.filter(p => p.status === 'ACTIVE').length,
@@ -182,7 +182,7 @@ async function getAdminDashboard(req, res) {
             ? Math.round(scored.reduce((s, p) => s + p.ai_success_score, 0) / scored.length)
             : null
 
-        // ── 5. Resource Utilization Metrics ──────────────────────────────────
+        // -- 5. Resource Utilization Metrics ----------------------------------
         const task_by_status = {
             TODO:        tasks.filter(t => t.status === 'TODO').length,
             IN_PROGRESS: tasks.filter(t => t.status === 'IN_PROGRESS').length,
@@ -214,7 +214,7 @@ async function getAdminDashboard(req, res) {
             .sort((a, b) => b.task_count - a.task_count)
             .slice(0, 10)
 
-        // ── 6. Skill Matrix (org-wide) ────────────────────────────────────────
+        // -- 6. Skill Matrix (org-wide) ----------------------------------------
         // Count how many users have each skill + proficiency breakdown
         const skill_matrix = {}
         for (const user of users) {
@@ -232,7 +232,7 @@ async function getAdminDashboard(req, res) {
             .sort((a, b) => b.total - a.total)
             .slice(0, 15) // top 15 skills
 
-        // ── 7. Org-wide Skill Gap ─────────────────────────────────────────────
+        // -- 7. Org-wide Skill Gap ---------------------------------------------
         // Which skills are required most across projects but least available
         const required_skill_counts = {}
         for (const project of projects) {
@@ -252,7 +252,7 @@ async function getAdminDashboard(req, res) {
             .sort((a, b) => b.gap - a.gap)
             .slice(0, 10)
 
-        // ── 8. User Activity Logs ─────────────────────────────────────────────
+        // -- 8. User Activity Logs ---------------------------------------------
         // Latest activities across all users, flattened and sorted by date
         const activity_logs = []
         for (const user of users) {
@@ -267,7 +267,7 @@ async function getAdminDashboard(req, res) {
         }
         activity_logs.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
 
-        // ── 9. User table (for user management panel) ─────────────────────────
+        // -- 9. User table (for user management panel) -------------------------
         const user_table = users.map(u => ({
             _id:             u._id,
             username:        u.username,
@@ -279,14 +279,14 @@ async function getAdminDashboard(req, res) {
             profile_picture_url: u.profile_picture_url,
         }))
 
-        // ── 10. Recent projects ───────────────────────────────────────────────
+        // -- 10. Recent projects -----------------------------------------------
         const recent_projects = projects.slice(0, 8).map(p => ({
             _id:             p._id,
             name:            p.name,
             status:          p.status,
             ai_success_score:p.ai_success_score,
             team_size:       p.team_members?.length || 0,
-            created_by:      p.created_by?.username || '—',
+            created_by:      p.created_by?.username || '-',
             created_at:      p.created_at,
         }))
 

@@ -25,7 +25,7 @@ function normalizeRecommendationProgress(status, progressPct) {
     }
 }
 
-// ─── GET /api/profile/me ──────────────────────────────────────────────────────
+// --- GET /api/profile/me ------------------------------------------------------
 // Returns the full profile of the currently logged-in user
 // SRS 4.2: personal info, skills, availability, project history, metrics, recommendations, activity
 async function getMyProfile(req, res) {
@@ -48,7 +48,7 @@ async function getMyProfile(req, res) {
 }
 
 
-// ─── PUT /api/profile/me ──────────────────────────────────────────────────────
+// --- PUT /api/profile/me ------------------------------------------------------
 // Update personal information + availability
 // Allowed fields: bio, profile_picture_url, availability_hours_per_week, current_capacity_percentage
 async function updateMyProfile(req, res) {
@@ -60,7 +60,7 @@ async function updateMyProfile(req, res) {
             'current_capacity_percentage',
         ]
 
-        // Only pick allowed fields — reject anything else (model is strict: throw)
+        // Only pick allowed fields - reject anything else (model is strict: throw)
         const updates = {}
         for (const field of ALLOWED_FIELDS) {
             if (req.body[field] !== undefined) {
@@ -101,7 +101,7 @@ async function updateMyProfile(req, res) {
 }
 
 
-// ─── POST /api/profile/skills ─────────────────────────────────────────────────
+// --- POST /api/profile/skills -------------------------------------------------
 // Add a new skill with proficiency level
 // Body: { name, proficiency_level }
 async function addSkill(req, res) {
@@ -137,7 +137,7 @@ async function addSkill(req, res) {
             last_used: new Date(),
         })
 
-        user.logActivity('Added skill', `${name} — ${proficiency_level}`, 'SKILL')
+        user.logActivity('Added skill', `${name} - ${proficiency_level}`, 'SKILL')
         await user.save()
 
         res.status(201).json({
@@ -152,7 +152,7 @@ async function addSkill(req, res) {
 }
 
 
-// ─── PUT /api/profile/skills/:skillId ────────────────────────────────────────
+// --- PUT /api/profile/skills/:skillId ----------------------------------------
 // Update proficiency level of an existing skill
 // Body: { proficiency_level, last_used? }
 async function updateSkill(req, res) {
@@ -176,7 +176,7 @@ async function updateSkill(req, res) {
         if (proficiency_level) skill.proficiency_level = proficiency_level
         if (last_used)         skill.last_used = new Date(last_used)
 
-        user.logActivity('Updated skill', `${skill.name} → ${proficiency_level}`, 'SKILL')
+        user.logActivity('Updated skill', `${skill.name} -> ${proficiency_level}`, 'SKILL')
         await user.save()
 
         res.status(200).json({
@@ -191,7 +191,7 @@ async function updateSkill(req, res) {
 }
 
 
-// ─── DELETE /api/profile/skills/:skillId ─────────────────────────────────────
+// --- DELETE /api/profile/skills/:skillId -------------------------------------
 // Remove a skill from the profile
 async function deleteSkill(req, res) {
     try {
@@ -220,7 +220,7 @@ async function deleteSkill(req, res) {
 }
 
 
-// ─── GET /api/profile/recommendations ────────────────────────────────────────
+// --- GET /api/profile/recommendations ----------------------------------------
 // Get all learning recommendations for the logged-in user
 async function getRecommendations(req, res) {
     try {
@@ -241,7 +241,7 @@ async function getRecommendations(req, res) {
 }
 
 
-// ─── POST /api/profile/recommendations ───────────────────────────────────────
+// --- POST /api/profile/recommendations ---------------------------------------
 // Add a learning recommendation (called by AI engine or PM/Admin)
 // Body: { skill_name, current_level, target_level, reason, course_name, course_url, priority }
 async function addRecommendation(req, res) {
@@ -296,7 +296,7 @@ async function addRecommendation(req, res) {
             }],
         })
 
-        user.logActivity('Received recommendation', `Learn ${skill_name} — ${target_level}`, 'SKILL')
+        user.logActivity('Received recommendation', `Learn ${skill_name} - ${target_level}`, 'SKILL')
         await user.save()
 
         res.status(201).json({
@@ -311,7 +311,7 @@ async function addRecommendation(req, res) {
 }
 
 
-// ─── DELETE /api/profile/recommendations/:recId ───────────────────────────────
+// --- DELETE /api/profile/recommendations/:recId -------------------------------
 // Remove a learning recommendation
 async function deleteRecommendation(req, res) {
     try {
@@ -335,8 +335,8 @@ async function deleteRecommendation(req, res) {
 }
 
 
-// ─── GET /api/profile/activity ────────────────────────────────────────────────
-// Get activity feed — supports pagination via ?page=1&limit=20
+// --- GET /api/profile/activity ------------------------------------------------
+// Get activity feed - supports pagination via ?page=1&limit=20
 async function getActivityFeed(req, res) {
     try {
         const page  = parseInt(req.query.page)  || 1
@@ -365,7 +365,7 @@ async function getActivityFeed(req, res) {
 }
 
 
-// ─── GET /api/profile/metrics ─────────────────────────────────────────────────
+// --- GET /api/profile/metrics -------------------------------------------------
 // Get performance metrics of the logged-in user
 async function getPerformanceMetrics(req, res) {
     try {
@@ -384,8 +384,8 @@ async function getPerformanceMetrics(req, res) {
 }
 
 
-// ─── GET /api/profile/:userId ─────────────────────────────────────────────────
-// View another user's profile — PM and Admin only
+// --- GET /api/profile/:userId -------------------------------------------------
+// View another user's profile - PM and Admin only
 // Returns full profile excluding password
 async function getUserProfile(req, res) {
     try {
@@ -466,7 +466,7 @@ async function updateRecommendation(req, res) {
 
         user.logActivity(
             'Updated learning progress',
-            `${rec.skill_name} — ${rec.progress_pct}%`,
+            `${rec.skill_name} - ${rec.progress_pct}%`,
             'SKILL'
         )
         await user.save()

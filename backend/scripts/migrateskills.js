@@ -1,6 +1,6 @@
-// ─── Migration: Convert user.skills from [String] to objects
+// --- Migration: Convert user.skills from [String] to objects
 // Run: node scripts/migrate_skills.js
-// No model dependencies — works directly with MongoDB
+// No model dependencies - works directly with MongoDB
 
 require('dotenv').config()
 const { MongoClient, ObjectId } = require('mongodb')
@@ -15,7 +15,7 @@ async function migrate() {
 
     const client = new MongoClient(MONGO_URI)
     await client.connect()
-    console.log('✓ Connected to MongoDB')
+    console.log('OK Connected to MongoDB')
 
     const db       = client.db(DB_NAME)
     const users    = db.collection('users')
@@ -35,7 +35,7 @@ async function migrate() {
         // Check if already in new format
         const first = user.skills[0]
         if (typeof first === 'object' && first !== null && (first.skill_name || first.proficiency_level)) {
-            console.log(`  — Skipped ${user.username} (already migrated)`)
+            console.log(`  - Skipped ${user.username} (already migrated)`)
             skipped++
             continue
         }
@@ -58,15 +58,15 @@ async function migrate() {
             { $set: { skills: newSkills } }
         )
 
-        console.log(`  ✓ Migrated ${user.username}: [${user.skills.join(', ')}]`)
+        console.log(`  OK Migrated ${user.username}: [${user.skills.join(', ')}]`)
         migrated++
     }
 
-    console.log(`\n✓ Done — ${migrated} migrated, ${skipped} skipped`)
+    console.log(`\nOK Done - ${migrated} migrated, ${skipped} skipped`)
     await client.close()
 }
 
 migrate().catch(err => {
-    console.error('✕ Migration failed:', err.message)
+    console.error('X Migration failed:', err.message)
     process.exit(1)
 })

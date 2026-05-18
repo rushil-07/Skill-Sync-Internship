@@ -750,6 +750,8 @@ function TaskDrawer({ task, isPM, onClose, onUpdate, onDelete }) {
   const [timerRunning, setTimerRunning] = useState(Boolean(task.active_timer?.started_at))
   const [elapsed, setElapsed] = useState(0)
   const [manualMins, setManualMins] = useState('')
+  const [uploadingAttachment, setUploadingAttachment] = useState(false)
+  const [attachmentError, setAttachmentError] = useState('')
   const intervalRef = useRef(null)
 
   const [aiSuggestions, setAiSuggestions] = useState(null)
@@ -877,6 +879,44 @@ function TaskDrawer({ task, isPM, onClose, onUpdate, onDelete }) {
     }
   }
 
+  const handleUploadAttachment = async (event) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+
+    setUploadingAttachment(true)
+    setAttachmentError('')
+
+    try {
+      const formData = new FormData()
+      formData.append('attachment', file)
+
+      const res = await axios.post(`${API}/api/tasks/${task._id}/attachments`, formData, {
+        withCredentials: true,
+      })
+
+      onUpdate(res.data.task)
+    } catch (err) {
+      setAttachmentError(err.response?.data?.message || 'Failed to upload attachment.')
+    } finally {
+      setUploadingAttachment(false)
+    }
+  }
+
+  const handleDeleteAttachment = async (attachmentId) => {
+    if (!confirm('Delete this attachment?')) return
+
+    setAttachmentError('')
+    try {
+      const res = await axios.delete(`${API}/api/tasks/${task._id}/attachments/${attachmentId}`, {
+        withCredentials: true,
+      })
+      onUpdate(res.data.task)
+    } catch (err) {
+      setAttachmentError(err.response?.data?.message || 'Failed to delete attachment.')
+    }
+  }
+
   const handleSuggestAssignees = async () => {
     setSuggesting(true)
     setSuggestionError('')
@@ -920,6 +960,7 @@ function TaskDrawer({ task, isPM, onClose, onUpdate, onDelete }) {
   const days = daysLeft(task.due_date)
   const completedSubs = task.subtasks?.filter((subtask) => subtask.completed).length || 0
   const totalSubs = task.subtasks?.length || 0
+  const attachments = task.attachments || []
 
   return (
     <div className="fixed inset-0 z-50 flex" onClick={onClose}>
@@ -1194,6 +1235,64 @@ function TaskDrawer({ task, isPM, onClose, onUpdate, onDelete }) {
                 Log
               </button>
             </form>
+          </div>
+
+          <div>
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <p className="text-[10px] font-bold uppercase tracking-[0.15em] ss-text-muted">
+                Attachments ({attachments.length})
+              </p>
+              <label className="cursor-pointer rounded-xl border border-[rgba(62,224,127,0.25)] bg-[rgba(62,224,127,0.1)] px-3 py-1.5 text-[10px] font-semibold text-[var(--ss-accent)]">
+                {uploadingAttachment ? 'Uploading...' : '+ Upload'}
+                <input
+                  type="file"
+                  className="hidden"
+                  disabled={uploadingAttachment}
+                  onChange={handleUploadAttachment}
+                />
+              </label>
+            </div>
+
+            {attachmentError && (
+              <div className="mb-2 rounded-xl border border-red-400/20 bg-red-400/8 px-3 py-2 text-[11px] text-[#FCA5A5]">
+                {attachmentError}
+              </div>
+            )}
+
+            {attachments.length === 0 ? (
+              <p className="text-[11px] text-[rgba(123,175,142,0.5)]">No attachments uploaded yet.</p>
+            ) : (
+              <div className="space-y-2">
+                {attachments.map((attachment) => (
+                  <div
+                    key={attachment._id}
+                    className="flex items-center gap-3 rounded-xl border bg-[rgba(40,98,58,0.07)] px-3 py-2 ss-border-theme"
+                  >
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-[rgba(40,98,58,0.3)] bg-[rgba(15,32,39,0.55)] text-[13px]">
+                      {'\u{1F4CE}'}
+                    </div>
+                    <a
+                      href={attachment.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="min-w-0 flex-1 truncate text-[12px] font-semibold ss-text-theme hover:text-[var(--ss-accent)]"
+                    >
+                      {attachment.name}
+                    </a>
+                    <span className="text-[10px] ss-text-muted">
+                      {attachment.size_bytes ? `${Math.ceil(attachment.size_bytes / 1024)} KB` : ''}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteAttachment(attachment._id)}
+                      className="rounded-lg px-2 py-1 text-[10px] font-semibold text-[rgba(248,113,113,0.75)] hover:bg-red-400/10 hover:text-[var(--ss-danger)]"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div>

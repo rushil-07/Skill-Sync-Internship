@@ -21,10 +21,25 @@ function canAccessProjectChat(project, user) {
     return (project.team_members || []).some(memberId => memberId.toString() === userId)
 }
 
-// ─── POST /api/project/create-project ────────────────────────────────────────
+function normalizeUploadedFile(file, userId) {
+    if (!file?.url || !file?.name) return null
+
+    return {
+        file_id: file.file_id || file.fileId || null,
+        name: file.name,
+        url: file.url,
+        thumbnail_url: file.thumbnail_url || file.thumbnailUrl || null,
+        type: file.type || null,
+        size_bytes: file.size_bytes || file.size || null,
+        imagekit_path: file.imagekit_path || file.filePath || null,
+        uploaded_by: userId,
+    }
+}
+
+// --- POST /api/project/create-project ----------------------------------------
 const createProject = async (req, res) => {
     try {
-        const { name, description, status, task_assignment_mode, start_date, end_date, budget } = req.body
+        const { name, description, status, task_assignment_mode, start_date, end_date, budget, project_brief } = req.body
 
         if (!name) return res.status(400).json({ message: 'name is required' })
 
@@ -35,6 +50,10 @@ const createProject = async (req, res) => {
         if (start_date)  payload.start_date  = new Date(start_date)
         if (end_date)    payload.end_date    = new Date(end_date)
         if (budget)      payload.budget      = Number(budget)
+        if (project_brief) {
+            const normalizedBrief = normalizeUploadedFile(project_brief, req.user.id)
+            if (normalizedBrief) payload.project_briefs = [normalizedBrief]
+        }
 
         const project = await projectModel.create(payload)
         await refreshProjectAnalytics(project._id)
@@ -53,7 +72,7 @@ const createProject = async (req, res) => {
 }
 
 
-// ─── GET /api/project/get-projects ───────────────────────────────────────────
+// --- GET /api/project/get-projects -------------------------------------------
 const getProjects = async (req, res) => {
     try {
         const projects = await projectModel
@@ -75,7 +94,7 @@ const getProjects = async (req, res) => {
 }
 
 
-// ─── GET /api/project/get-project/:id ────────────────────────────────────────
+// --- GET /api/project/get-project/:id ----------------------------------------
 const getProjectById = async (req, res) => {
     try {
         const project = await projectModel
@@ -94,7 +113,7 @@ const getProjectById = async (req, res) => {
 }
 
 
-// ─── PUT /api/project/update-project/:id ─────────────────────────────────────
+// --- PUT /api/project/update-project/:id -------------------------------------
 const updateProject = async (req, res) => {
     try {
         const ALLOWED = ['name', 'description', 'status', 'task_assignment_mode', 'start_date', 'end_date', 'budget', 'ai_success_score']
@@ -135,7 +154,7 @@ const updateProject = async (req, res) => {
 }
 
 
-// ─── DELETE /api/project/delete-project/:id ──────────────────────────────────
+// --- DELETE /api/project/delete-project/:id ----------------------------------
 const deleteProject = async (req, res) => {
     try {
         const project = await projectModel.findByIdAndDelete(req.params.id)
@@ -148,12 +167,12 @@ const deleteProject = async (req, res) => {
 }
 
 
-// ═════════════════════════════════════════════════════════════════════════════
+// =============================================================================
 // TEAM MEMBER MANAGEMENT
-// ═════════════════════════════════════════════════════════════════════════════
+// =============================================================================
 
-// ─── GET /api/project/users ───────────────────────────────────────────────────
-// Get all MEMBER-role users — used to populate the "Add Member" picker
+// --- GET /api/project/users ---------------------------------------------------
+// Get all MEMBER-role users - used to populate the "Add Member" picker
 // Returns username, email, capacity, skills count
 const getUsers = async (req, res) => {
     try {
@@ -170,7 +189,7 @@ const getUsers = async (req, res) => {
 }
 
 
-// ─── POST /api/project/:id/team ───────────────────────────────────────────────
+// --- POST /api/project/:id/team -----------------------------------------------
 // Add a member to a project
 // Body: { userId }
 const addTeamMember = async (req, res) => {
@@ -209,7 +228,7 @@ const addTeamMember = async (req, res) => {
             }
         })
 
-        // ── Notify the added member ───────────────────────────────────────────
+        // -- Notify the added member -------------------------------------------
         await notifService.create(
             userId,
             'PROJECT_JOINED',
@@ -231,7 +250,7 @@ const addTeamMember = async (req, res) => {
 }
 
 
-// ─── DELETE /api/project/:id/team/:userId ─────────────────────────────────────
+// --- DELETE /api/project/:id/team/:userId -------------------------------------
 // Remove a member from a project
 const removeTeamMember = async (req, res) => {
     try {
@@ -268,7 +287,7 @@ const removeTeamMember = async (req, res) => {
     }
 }
 
-// ─── PUT /api/project/:id/team-selection ──────────────────────────────────────
+// --- PUT /api/project/:id/team-selection --------------------------------------
 // Replace current team with selected AI team
 // Body: { memberIds: string[] }
 const setProjectTeam = async (req, res) => {

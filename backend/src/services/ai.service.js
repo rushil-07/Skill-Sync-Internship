@@ -1346,7 +1346,13 @@ function parseJsonFromGeminiResponse(payload) {
         throw error
     }
 
-    return JSON.parse(text)
+    const cleaned = text
+        .trim()
+        .replace(/^```(?:json)?\s*/i, '')
+        .replace(/\s*```$/i, '')
+        .trim()
+
+    return JSON.parse(cleaned)
 }
 
 async function parseProjectBriefWithGemini(briefText, providedName = '') {
@@ -1834,5 +1840,14 @@ module.exports = {
     suggestTaskRedistributionForPM,
     getTeamAssemblyRecommendations,
     parseProjectBrief,
+    __test__: {
+        normalizeText,
+        getRank,
+        clamp,
+        average,
+        buildCourseSuggestion,
+        buildRecommendationPriority,
+        parseJsonFromGeminiResponse,
+    },
 }
 

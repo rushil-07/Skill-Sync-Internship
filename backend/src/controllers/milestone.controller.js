@@ -2,8 +2,8 @@ const projectModel = require('../models/project.model')
 const taskModel    = require('../models/task.model')
 const { refreshProjectAnalytics } = require('../services/ai.service')
 
-// ─── GET /api/milestones/project/:projectId ───────────────────────────────────
-// Get all milestones for a project — any authenticated user
+// --- GET /api/milestones/project/:projectId -----------------------------------
+// Get all milestones for a project - any authenticated user
 async function getMilestones(req, res) {
     try {
         const project = await projectModel
@@ -37,8 +37,8 @@ async function getMilestones(req, res) {
 }
 
 
-// ─── POST /api/milestones/project/:projectId ──────────────────────────────────
-// Create a milestone — PM only
+// --- POST /api/milestones/project/:projectId ----------------------------------
+// Create a milestone - PM only
 // Body: { title, description, due_date, linked_tasks[] }
 async function createMilestone(req, res) {
     try {
@@ -77,8 +77,8 @@ async function createMilestone(req, res) {
 }
 
 
-// ─── PUT /api/milestones/project/:projectId/:milestoneId ──────────────────────
-// Update milestone — PM only
+// --- PUT /api/milestones/project/:projectId/:milestoneId ----------------------
+// Update milestone - PM only
 // Body: any of { title, description, due_date, linked_tasks }
 async function updateMilestone(req, res) {
     try {
@@ -109,8 +109,8 @@ async function updateMilestone(req, res) {
 }
 
 
-// ─── DELETE /api/milestones/project/:projectId/:milestoneId ──────────────────
-// Delete milestone — PM only
+// --- DELETE /api/milestones/project/:projectId/:milestoneId ------------------
+// Delete milestone - PM only
 async function deleteMilestone(req, res) {
     try {
         const project = await projectModel.findById(req.params.projectId)
@@ -132,8 +132,8 @@ async function deleteMilestone(req, res) {
 }
 
 
-// ─── PUT /api/milestones/project/:projectId/:milestoneId/complete ─────────────
-// Mark a milestone as COMPLETED — PM only
+// --- PUT /api/milestones/project/:projectId/:milestoneId/complete -------------
+// Mark a milestone as COMPLETED - PM only
 async function completeMilestone(req, res) {
     try {
         const project = await projectModel.findById(req.params.projectId)
@@ -158,8 +158,8 @@ async function completeMilestone(req, res) {
 }
 
 
-// ─── PUT /api/milestones/project/:projectId/:milestoneId/reopen ───────────────
-// Reopen a completed/missed milestone back to PENDING — PM only
+// --- PUT /api/milestones/project/:projectId/:milestoneId/reopen ---------------
+// Reopen a completed/missed milestone back to PENDING - PM only
 async function reopenMilestone(req, res) {
     try {
         const project = await projectModel.findById(req.params.projectId)
@@ -184,8 +184,8 @@ async function reopenMilestone(req, res) {
 }
 
 
-// ─── GET /api/milestones/upcoming ────────────────────────────────────────────
-// Get upcoming milestones across ALL of the PM's projects — for PM dashboard
+// --- GET /api/milestones/upcoming --------------------------------------------
+// Get upcoming milestones across ALL of the PM's projects - for PM dashboard
 async function getUpcomingMilestones(req, res) {
     try {
         const now           = new Date()

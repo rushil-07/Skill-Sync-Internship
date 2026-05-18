@@ -1,8 +1,8 @@
 const nodemailer = require('nodemailer')
 
-// ─── Create transporter ───────────────────────────────────────────────────────
+// --- Create transporter -------------------------------------------------------
 // Uses Gmail by default. Set EMAIL_USER and EMAIL_PASS in .env
-// For Gmail: enable 2FA → generate an App Password → use it as EMAIL_PASS
+// For Gmail: enable 2FA -> generate an App Password -> use it as EMAIL_PASS
 // For other providers: change the service or use host/port directly
 
 function createTransporter() {
@@ -28,7 +28,7 @@ function createTransporter() {
     })
 }
 
-// ─── Send password reset email ────────────────────────────────────────────────
+// --- Send password reset email ------------------------------------------------
 async function sendPasswordResetEmail(toEmail, username, resetToken) {
     const transporter = createTransporter()
 
@@ -76,12 +76,12 @@ async function sendPasswordResetEmail(toEmail, username, resetToken) {
               text-decoration:none;border-radius:12px;
               border:1px solid rgba(62,224,127,0.25);
               box-shadow:0 8px 24px rgba(62,224,127,0.15);">
-      Reset Password →
+      Reset Password ->
     </a>
 
     <!-- Expiry notice -->
     <p style="color:#7BAF8E;font-size:12px;margin:24px 0 0 0;line-height:1.6;">
-      ⏰ This link expires in <strong style="color:#FBBF24;">${expiryMins} minutes</strong>.
+      clock This link expires in <strong style="color:#FBBF24;">${expiryMins} minutes</strong>.
       If you didn't request a password reset, you can safely ignore this email.
     </p>
 
@@ -96,7 +96,7 @@ async function sendPasswordResetEmail(toEmail, username, resetToken) {
 
     <!-- Footer -->
     <p style="color:rgba(123,175,142,0.3);font-size:11px;margin:20px 0 0 0;text-align:center;">
-      © SkillSync · AI-Powered Project Management
+      (c) SkillSync - AI-Powered Project Management
     </p>
   </div>
 </body>

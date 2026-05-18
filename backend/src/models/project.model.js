@@ -1,6 +1,6 @@
 const mongoose = require('mongoose')
 
-// ─── Milestone sub-schema ─────────────────────────────────────────────────────
+// --- Milestone sub-schema -----------------------------------------------------
 const milestoneSchema = new mongoose.Schema({
     title:       { type: String, required: true, trim: true },
     description: { type: String, trim: true },
@@ -12,8 +12,8 @@ const milestoneSchema = new mongoose.Schema({
 }, { _id: true })
 
 
-// ─── Required Skill sub-schema ────────────────────────────────────────────────
-// SRS 4.3 — "Required Skills: Array of skills with required proficiency levels"
+// --- Required Skill sub-schema ------------------------------------------------
+// SRS 4.3 - "Required Skills: Array of skills with required proficiency levels"
 const requiredSkillSchema = new mongoose.Schema({
     skill_id:   { type: mongoose.Schema.Types.ObjectId, ref: 'skill', required: true },
     skill_name: { type: String, required: true, trim: true },     // denormalized for fast display
@@ -67,8 +67,20 @@ const analyticsSnapshotSchema = new mongoose.Schema({
     },
 }, { _id: true })
 
+const projectBriefFileSchema = new mongoose.Schema({
+    file_id:       { type: String },
+    name:          { type: String, required: true },
+    url:           { type: String, required: true },
+    thumbnail_url: { type: String, default: null },
+    type:          { type: String },
+    size_bytes:    { type: Number },
+    imagekit_path: { type: String },
+    uploaded_by:   { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
+    uploaded_at:   { type: Date, default: Date.now },
+}, { _id: true })
 
-// ─── Main Project Schema ──────────────────────────────────────────────────────
+
+// --- Main Project Schema ------------------------------------------------------
 const projectSchema = new mongoose.Schema({
     name:        { type: String, required: true },
     description: { type: String },
@@ -84,7 +96,7 @@ const projectSchema = new mongoose.Schema({
     created_by:  { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     ai_success_score: { type: Number, min: 0, max: 100, default: null },
 
-    // ── FIXED: was [ObjectId], now [{skill_id, skill_name, required_proficiency}] ──
+    // -- FIXED: was [ObjectId], now [{skill_id, skill_name, required_proficiency}] --
     required_skills: { type: [requiredSkillSchema], default: [] },
 
     project_manager: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
@@ -92,6 +104,7 @@ const projectSchema = new mongoose.Schema({
     interested_members: { type: [interestedMemberSchema], default: [] },
     chat_messages:   { type: [projectChatMessageSchema], default: [] },
     analytics_history: { type: [analyticsSnapshotSchema], default: [] },
+    project_briefs: { type: [projectBriefFileSchema], default: [] },
     milestones:      { type: [milestoneSchema], default: [] },
     created_at:      { type: Date, default: Date.now },
     updated_at:      { type: Date, default: Date.now },

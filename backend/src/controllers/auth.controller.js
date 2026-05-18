@@ -5,7 +5,7 @@ const bcrypt       = require('bcryptjs')
 const crypto       = require('crypto')
 const emailService = require('../services/email.service')
 
-// ─── POST /api/auth/register ──────────────────────────────────────────────────
+// --- POST /api/auth/register --------------------------------------------------
 async function registerUser(req, res) {
     try {
         const {
@@ -26,8 +26,8 @@ async function registerUser(req, res) {
 
         const hashedPassword = await bcrypt.hash(password, 10)
 
-        // ── Convert skill strings to proper subdocuments ───────────────────────
-        // RegisterPage sends skills as ["React", "Python"] — plain strings
+        // -- Convert skill strings to proper subdocuments -----------------------
+        // RegisterPage sends skills as ["React", "Python"] - plain strings
         // We find or create each skill in the taxonomy, then build the subdoc
         const skillDocs = []
         if (Array.isArray(skills) && skills.length > 0) {
@@ -90,7 +90,7 @@ async function registerUser(req, res) {
 }
 
 
-// ─── POST /api/auth/login ─────────────────────────────────────────────────────
+// --- POST /api/auth/login -----------------------------------------------------
 async function loginUser(req, res) {
     try {
         const { username, email, password } = req.body
@@ -128,14 +128,14 @@ async function loginUser(req, res) {
 }
 
 
-// ─── POST /api/auth/logout ────────────────────────────────────────────────────
+// --- POST /api/auth/logout ----------------------------------------------------
 async function logoutUser(req, res) {
     res.clearCookie('token', { httpOnly: true, sameSite: 'lax' })
     res.status(200).json({ message: 'Logged out successfully' })
 }
 
 
-// ─── POST /api/auth/forgot-password ──────────────────────────────────────────
+// --- POST /api/auth/forgot-password ------------------------------------------
 // Body: { email }
 // Generates a secure random token, saves it hashed to the user, sends reset email
 async function forgotPassword(req, res) {
@@ -145,7 +145,7 @@ async function forgotPassword(req, res) {
 
         const user = await userModel.findOne({ email: email.toLowerCase().trim() })
 
-        // Always return success — don't reveal if email exists (security best practice)
+        // Always return success - don't reveal if email exists (security best practice)
         if (!user) {
             return res.status(200).json({
                 message: 'If an account with that email exists, a reset link has been sent.'
@@ -174,7 +174,7 @@ async function forgotPassword(req, res) {
 }
 
 
-// ─── POST /api/auth/reset-password ───────────────────────────────────────────
+// --- POST /api/auth/reset-password -------------------------------------------
 // Body: { token, password }
 // Validates token, hashes and saves new password, clears reset token
 async function resetPassword(req, res) {
@@ -218,8 +218,8 @@ async function resetPassword(req, res) {
 }
 
 
-// ─── POST /api/auth/verify-token ─────────────────────────────────────────────
-// Body: { token } — checks if a reset token is still valid before showing the form
+// --- POST /api/auth/verify-token ---------------------------------------------
+// Body: { token } - checks if a reset token is still valid before showing the form
 async function verifyResetToken(req, res) {
     try {
         const { token } = req.body
